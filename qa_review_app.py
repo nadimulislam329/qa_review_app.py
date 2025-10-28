@@ -206,3 +206,29 @@ else:
         if st.button("Next ➡️", use_container_width=True):
             save_and_navigate("next")
             st.rerun()
+# Download section
+st.markdown("---")
+st.markdown("### 📥 Download Results")
+
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    st.write("Download the completed review with all remarks")
+
+with col3:
+    if os.path.exists(OUTPUT_FILE):
+        try:
+            df_download = pd.read_csv(OUTPUT_FILE)
+            csv = df_download.to_csv(index=False).encode('utf-8')
+            
+            st.download_button(
+                label="⬇️ Download CSV",
+                data=csv,
+                file_name=f"qa_review_remarks_{datetime.now(bd_tz).strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"Error loading file: {e}")
+    else:
+        st.info("No remarks saved yet. Start reviewing!")
