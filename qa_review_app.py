@@ -1,4 +1,3 @@
-%%writefile qa_review_app.py
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -309,7 +308,7 @@ with st.sidebar:
 OUTPUT_FILE = "/content/qa_dataset_with_remarks.csv"
 
 # Load data
-df = pd.read_csv("/content/qa_dataset - Sheet1.csv")
+df = pd.read_csv("qa_dataset - Sheet1.csv")
 
 if "index" not in st.session_state:
     st.session_state.index = 0
