@@ -62,7 +62,7 @@ with st.sidebar:
     """)
 
 # Define file paths
-OUTPUT_FILE = "/content/qa_dataset_with_remarks.csv"
+OUTPUT_FILE = "qa_dataset_with_remarks.csv"
 
 # Load data
 df = pd.read_csv("qa_dataset - Sheet1.csv")
