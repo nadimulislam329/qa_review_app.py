@@ -208,12 +208,8 @@ else:
             st.rerun()
 # Download section
 st.markdown("---")
-st.markdown("### 📥 Download Results")
 
-col1, col2 = st.columns([3, 1])
-
-with col1:
-    st.write("Download the completed review with all remarks")
+col1, col3 = st.columns([3, 1])
 
 with col3:
     if os.path.exists(OUTPUT_FILE):
