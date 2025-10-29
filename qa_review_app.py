@@ -104,21 +104,32 @@ st.markdown("""
         font-size: 1.1rem;
     }
     
-    /* Custom styled text area */
-    .stTextArea textarea {
-        border: 2px solid #e0e7ff !important;
-        border-radius: 10px !important;
-        padding: 15px !important;
-        font-size: 15px !important;
-        transition: all 0.3s ease !important;
-        background: white !important;
-    }
-    
-    .stTextArea textarea:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-        outline: none !important;
-    }
+    //* Custom styled text area - FIXED */
+.stTextArea textarea {
+    border: 2px solid #e0e7ff !important;
+    border-radius: 10px !important;
+    padding: 15px !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    background: white !important;
+    color: #2d3748 !important;
+    line-height: 1.6 !important;
+}
+
+.stTextArea textarea::placeholder {
+    color: #a0aec0 !important;
+}
+
+.stTextArea textarea:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    outline: none !important;
+}
+
+.stTextArea label {
+    color: #2d3748 !important;
+    font-weight: 600 !important;
+}
     
     /* Rating section styling */
     .rating-container {
