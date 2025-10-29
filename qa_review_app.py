@@ -537,7 +537,7 @@ else:
 
 # Download section
 st.markdown("---")
-st.markdown("### 📥 Download Results")
+
 
 col1, col2 = st.columns([2, 1])
 
