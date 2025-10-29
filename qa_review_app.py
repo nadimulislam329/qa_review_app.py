@@ -15,20 +15,16 @@ st.set_page_config(
 # Enhanced CSS styling
 st.markdown("""
     <style>
-    /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
-    /* Global Styles */
     * {
         font-family: 'Inter', sans-serif;
     }
     
-    /* Main container */
     .main {
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
     
-    /* Animated gradient header */
     .main-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
         background-size: 200% 200%;
@@ -77,7 +73,6 @@ st.markdown("""
         z-index: 1;
     }
     
-    /* Question card with glassmorphism */
     .question-card {
         background: rgba(255, 255, 255, 0.9);
         backdrop-filter: blur(10px);
@@ -104,34 +99,32 @@ st.markdown("""
         font-size: 1.1rem;
     }
     
-    //* Custom styled text area - FIXED */
-.stTextArea textarea {
-    border: 2px solid #e0e7ff !important;
-    border-radius: 10px !important;
-    padding: 15px !important;
-    font-size: 15px !important;
-    transition: all 0.3s ease !important;
-    background: white !important;
-    color: #2d3748 !important;
-    line-height: 1.6 !important;
-}
-
-.stTextArea textarea::placeholder {
-    color: #a0aec0 !important;
-}
-
-.stTextArea textarea:focus {
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-    outline: none !important;
-}
-
-.stTextArea label {
-    color: #2d3748 !important;
-    font-weight: 600 !important;
-}
+    .stTextArea textarea {
+        border: 2px solid #e0e7ff !important;
+        border-radius: 10px !important;
+        padding: 15px !important;
+        font-size: 15px !important;
+        transition: all 0.3s ease !important;
+        background: white !important;
+        color: #2d3748 !important;
+        line-height: 1.6 !important;
+    }
     
-    /* Rating section styling */
+    .stTextArea textarea::placeholder {
+        color: #a0aec0 !important;
+    }
+    
+    .stTextArea textarea:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        outline: none !important;
+    }
+    
+    .stTextArea label {
+        color: #2d3748 !important;
+        font-weight: 600 !important;
+    }
+    
     .rating-container {
         background: rgba(255, 255, 255, 0.9);
         backdrop-filter: blur(10px);
@@ -142,37 +135,6 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
     
-    /* Radio button styling */
-    .stRadio > div {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-    
-    .stRadio > div > label {
-        background: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        border: 2px solid #e0e7ff;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-weight: 500;
-    }
-    
-    .stRadio > div > label:hover {
-        border-color: #667eea;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-    }
-    
-    /* Info and success boxes */
-    .stAlert {
-        border-radius: 10px !important;
-        border: none !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;
-    }
-    
-    /* Sidebar styling */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #667eea 0%, #764ba2 100%) !important;
     }
@@ -181,7 +143,8 @@ st.markdown("""
         color: white !important;
     }
     
-    [data-testid="stSidebar"] .stTextInput input {
+    [data-testid="stSidebar"] .stTextInput input,
+    [data-testid="stSidebar"] .stNumberInput input {
         background: rgba(255, 255, 255, 0.2) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
         color: white !important;
@@ -192,13 +155,11 @@ st.markdown("""
         color: rgba(255, 255, 255, 0.7) !important;
     }
     
-    /* Progress bar */
     .stProgress > div > div {
         background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
         border-radius: 10px !important;
     }
     
-    /* Metrics */
     [data-testid="stMetric"] {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 1rem;
@@ -217,7 +178,6 @@ st.markdown("""
         font-weight: 700 !important;
     }
     
-    /* Buttons */
     .stButton button {
         border-radius: 10px !important;
         padding: 0.75rem 2rem !important;
@@ -241,7 +201,6 @@ st.markdown("""
         background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
     }
     
-    /* Download button */
     .stDownloadButton button {
         background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
         color: white !important;
@@ -251,7 +210,6 @@ st.markdown("""
         background: linear-gradient(135deg, #20c997 0%, #28a745 100%) !important;
     }
     
-    /* Headings */
     h1, h2, h3, h4 {
         font-weight: 700 !important;
         color: #2d3748 !important;
@@ -261,7 +219,6 @@ st.markdown("""
         color: #667eea !important;
     }
     
-    /* Success message animation */
     .stSuccess {
         animation: slideIn 0.5s ease;
     }
@@ -277,7 +234,6 @@ st.markdown("""
         }
     }
     
-    /* Custom scrollbar */
     ::-webkit-scrollbar {
         width: 10px;
         height: 10px;
@@ -297,7 +253,6 @@ st.markdown("""
         background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     }
     
-    /* Responsive design */
     @media (max-width: 768px) {
         .main-header {
             padding: 1.5rem;
@@ -321,6 +276,39 @@ st.markdown("""
 # Set timezone to Bangladesh
 bd_tz = pytz.timezone('Asia/Dhaka')
 
+# Define file paths
+OUTPUT_FILE = "qa_dataset_with_remarks.csv"
+INPUT_FILE = "qa_dataset - Sheet1.csv"
+
+# Validate and load data
+@st.cache_data
+def load_data():
+    try:
+        df = pd.read_csv(INPUT_FILE)
+        required_cols = ['Question', 'Answer', 'Gold Answer']
+        missing = [col for col in required_cols if col not in df.columns]
+        if missing:
+            st.error(f"❌ Missing required columns: {', '.join(missing)}")
+            st.stop()
+        return df
+    except FileNotFoundError:
+        st.error(f"❌ Input file not found: {INPUT_FILE}")
+        st.stop()
+    except Exception as e:
+        st.error(f"❌ Error loading data: {e}")
+        st.stop()
+
+df = load_data()
+
+# Load existing reviews
+def load_existing_reviews():
+    if os.path.exists(OUTPUT_FILE):
+        try:
+            return pd.read_csv(OUTPUT_FILE)
+        except:
+            return None
+    return None
+
 # Sidebar
 with st.sidebar:
     st.markdown("### 📋 Review Settings")
@@ -328,6 +316,23 @@ with st.sidebar:
     
     current_time = datetime.now(bd_tz).strftime("%Y-%m-%d %I:%M:%S %p")
     st.info(f"📅 {current_time}")
+    
+    st.markdown("---")
+    
+    # Jump to question feature
+    st.markdown("### 🎯 Quick Navigation")
+    jump_to = st.number_input(
+        "Jump to question:",
+        min_value=1,
+        max_value=len(df),
+        value=st.session_state.get('index', 0) + 1,
+        step=1
+    )
+    if st.button("Go", use_container_width=True):
+        st.session_state.index = jump_to - 1
+        st.session_state.remark_counter += 1
+        st.session_state.rating_counter += 1
+        st.rerun()
     
     st.markdown("---")
     st.markdown("### 📖 Instructions")
@@ -350,12 +355,7 @@ with st.sidebar:
     - **Very Poor**: Completely wrong
     """)
 
-# Define file paths
-OUTPUT_FILE = "qa_dataset_with_remarks.csv"
-
-# Load data
-df = pd.read_csv("qa_dataset - Sheet1.csv")
-
+# Initialize session state
 if "index" not in st.session_state:
     st.session_state.index = 0
 
@@ -373,20 +373,46 @@ st.caption(f"📊 Progress: {st.session_state.index + 1} of {len(df)} questions"
 # Question Display
 row = df.iloc[st.session_state.index]
 
+# Load existing review for current question
+df_saved = load_existing_reviews()
+existing_rating = None
+existing_rating_key = None
+existing_remark = ""
+
+if df_saved is not None and st.session_state.index < len(df_saved):
+    if 'Rating' in df_saved.columns:
+        saved_rating = df_saved.iloc[st.session_state.index]['Rating']
+        if pd.notna(saved_rating) and saved_rating != "":
+            existing_rating = saved_rating
+    if 'Remarks' in df_saved.columns:
+        saved_remark = df_saved.iloc[st.session_state.index]['Remarks']
+        if pd.notna(saved_remark):
+            existing_remark = saved_remark
+
 col1, col2 = st.columns([2, 1])
 with col1:
     st.markdown(f"### 📝 Question {st.session_state.index + 1}")
 with col2:
-    remarks_count = 0
-    if os.path.exists(OUTPUT_FILE):
-        try:
-            df_saved = pd.read_csv(OUTPUT_FILE)
-            if 'Remarks' in df_saved.columns:
-                remarks_count = df_saved['Remarks'].apply(lambda x: isinstance(x, str) and x.strip() != "").sum()
-        except Exception as e:
-            pass
+    # Count how many questions have been reviewed (have either rating or remark)
+    reviewed_count = 0
+    if df_saved is not None:
+        for i in range(len(df)):
+            has_rating = False
+            has_remark = False
+            
+            if i < len(df_saved):
+                if 'Rating' in df_saved.columns:
+                    rating_val = df_saved.iloc[i]['Rating']
+                    has_rating = pd.notna(rating_val) and str(rating_val).strip() != ""
+                
+                if 'Remarks' in df_saved.columns:
+                    remark_val = df_saved.iloc[i]['Remarks']
+                    has_remark = pd.notna(remark_val) and str(remark_val).strip() != ""
+            
+            if has_rating or has_remark:
+                reviewed_count += 1
     
-    st.metric("✅ Reviewed", f"{remarks_count}/{len(df)}")
+    st.metric("✅ Reviewed", f"{reviewed_count}/{len(df)}")
 
 # Question Card
 st.markdown(f"""
@@ -420,10 +446,17 @@ rating_options = {
     "⭐ Very Poor": 1
 }
 
+# Set default index based on existing rating
+default_index = None
+if existing_rating:
+    rating_keys = list(rating_options.keys())
+    if existing_rating in rating_keys:
+        default_index = rating_keys.index(existing_rating)
+
 rating = st.radio(
     "Select a rating:",
     options=list(rating_options.keys()),
-    index=None,
+    index=default_index,
     key=f"rating_{st.session_state.index}_{st.session_state.rating_counter}",
     horizontal=True
 )
@@ -434,7 +467,7 @@ st.markdown("### 💭 Your Remarks")
 
 remark = st.text_area(
     "Add your evaluation remarks here:",
-    "",
+    value=existing_remark,
     height=150,
     key=f"remark_{st.session_state.index}_{st.session_state.remark_counter}",
     placeholder="✍️ Write your observations, corrections, or comments..."
@@ -442,7 +475,6 @@ remark = st.text_area(
 
 def save_review():
     """Save the current rating and remark to CSV"""
-    # Check if either rating or remark is provided
     has_rating = rating is not None
     has_remark = remark.strip() != ""
     
@@ -459,16 +491,9 @@ def save_review():
                 df_saved['Review_Date'] = ""
             
             # Ensure all columns exist
-            if 'Rating' not in df_saved.columns:
-                df_saved['Rating'] = ""
-            if 'Rating_Value' not in df_saved.columns:
-                df_saved['Rating_Value'] = ""
-            if 'Remarks' not in df_saved.columns:
-                df_saved['Remarks'] = ""
-            if 'Reviewer' not in df_saved.columns:
-                df_saved['Reviewer'] = ""
-            if 'Review_Date' not in df_saved.columns:
-                df_saved['Review_Date'] = ""
+            for col in ['Rating', 'Rating_Value', 'Remarks', 'Reviewer', 'Review_Date']:
+                if col not in df_saved.columns:
+                    df_saved[col] = ""
             
             save_time = datetime.now(bd_tz).strftime("%Y-%m-%d %I:%M:%S %p")
             
@@ -538,7 +563,6 @@ else:
 # Download section
 st.markdown("---")
 
-
 col1, col2 = st.columns([2, 1])
 
 with col2:
@@ -558,3 +582,21 @@ with col2:
             st.error(f"Error loading file: {e}")
     else:
         st.info("No reviews saved yet. Start reviewing!")
+
+# Show review statistics
+if df_saved is not None:
+    with col1:
+        with st.expander("📊 Review Statistics"):
+            if 'Rating_Value' in df_saved.columns:
+                ratings = df_saved['Rating_Value'].dropna()
+                if len(ratings) > 0:
+                    ratings_numeric = pd.to_numeric(ratings, errors='coerce').dropna()
+                    if len(ratings_numeric) > 0:
+                        avg_rating = ratings_numeric.mean()
+                        st.metric("Average Rating", f"{avg_rating:.2f} ⭐")
+                        
+                        rating_dist = df_saved['Rating'].value_counts()
+                        st.write("**Rating Distribution:**")
+                        for rating_label, count in rating_dist.items():
+                            if pd.notna(rating_label) and rating_label != "":
+                                st.write(f"- {rating_label}: {count}")
