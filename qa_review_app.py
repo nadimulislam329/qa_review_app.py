@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import pytz
 import os
+import json
 
 # Page configuration
 st.set_page_config(
@@ -279,6 +280,31 @@ bd_tz = pytz.timezone('Asia/Dhaka')
 # Define file paths
 OUTPUT_FILE = "qa_dataset_with_remarks.csv"
 INPUT_FILE = "qa_dataset - Sheet1.csv"
+PROGRESS_FILE = "review_progress.json"
+
+# Progress persistence functions
+def save_progress(index, reviewer_name):
+    """Save current progress to a JSON file"""
+    try:
+        progress_data = {
+            'last_index': index,
+            'reviewer_name': reviewer_name,
+            'last_updated': datetime.now(bd_tz).strftime("%Y-%m-%d %I:%M:%S %p")
+        }
+        with open(PROGRESS_FILE, 'w') as f:
+            json.dump(progress_data, f)
+    except Exception as e:
+        st.warning(f"Could not save progress: {e}")
+
+def load_progress():
+    """Load saved progress from JSON file"""
+    if os.path.exists(PROGRESS_FILE):
+        try:
+            with open(PROGRESS_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return None
+    return None
 
 # Validate and load data
 @st.cache_data
@@ -309,10 +335,31 @@ def load_existing_reviews():
             return None
     return None
 
+# Initialize session state with saved progress
+if "index" not in st.session_state:
+    saved_progress = load_progress()
+    if saved_progress:
+        st.session_state.index = saved_progress.get('last_index', 0)
+        st.session_state.loaded_reviewer_name = saved_progress.get('reviewer_name', '')
+        st.session_state.show_resume_message = True
+    else:
+        st.session_state.index = 0
+        st.session_state.loaded_reviewer_name = ''
+        st.session_state.show_resume_message = False
+
+if "remark_counter" not in st.session_state:
+    st.session_state.remark_counter = 0
+
+if "rating_counter" not in st.session_state:
+    st.session_state.rating_counter = 0
+
 # Sidebar
 with st.sidebar:
     st.markdown("### 📋 Review Settings")
-    reviewer_name = st.text_input("👤 Reviewer Name:", placeholder="Enter your name")
+    
+    # Use loaded reviewer name as default
+    default_name = st.session_state.get('loaded_reviewer_name', '')
+    reviewer_name = st.text_input("👤 Reviewer Name:", value=default_name, placeholder="Enter your name")
     
     current_time = datetime.now(bd_tz).strftime("%Y-%m-%d %I:%M:%S %p")
     st.info(f"📅 {current_time}")
@@ -332,6 +379,17 @@ with st.sidebar:
         st.session_state.index = jump_to - 1
         st.session_state.remark_counter += 1
         st.session_state.rating_counter += 1
+        save_progress(st.session_state.index, reviewer_name)
+        st.rerun()
+    
+    st.markdown("---")
+    
+    # Reset progress button
+    if st.button("🔄 Start from Beginning", use_container_width=True):
+        st.session_state.index = 0
+        st.session_state.remark_counter += 1
+        st.session_state.rating_counter += 1
+        save_progress(0, reviewer_name)
         st.rerun()
     
     st.markdown("---")
@@ -343,6 +401,7 @@ with st.sidebar:
     4. ✍️ Add your remarks
     5. ⬅️➡️ Navigate using Previous/Next
     6. 💾 Everything is auto-saved!
+    7. 🔄 Your progress is saved automatically!
     """)
     
     st.markdown("---")
@@ -355,15 +414,10 @@ with st.sidebar:
     - **Very Poor**: Completely wrong
     """)
 
-# Initialize session state
-if "index" not in st.session_state:
-    st.session_state.index = 0
-
-if "remark_counter" not in st.session_state:
-    st.session_state.remark_counter = 0
-
-if "rating_counter" not in st.session_state:
-    st.session_state.rating_counter = 0
+# Show resume message if applicable
+if st.session_state.get('show_resume_message', False):
+    st.info(f"✨ Resuming from Question {st.session_state.index + 1}")
+    st.session_state.show_resume_message = False
 
 # Progress bar
 progress = (st.session_state.index + 1) / len(df)
@@ -526,6 +580,9 @@ def save_and_navigate(direction):
         st.session_state.index = max(0, st.session_state.index - 1)
     elif direction == "next":
         st.session_state.index = min(len(df) - 1, st.session_state.index + 1)
+    
+    # Save progress to file
+    save_progress(st.session_state.index, reviewer_name)
 
 # Navigation buttons
 st.markdown("---")
@@ -543,6 +600,7 @@ if st.session_state.index == len(df) - 1:
             if save_review():
                 st.session_state.remark_counter += 1
                 st.session_state.rating_counter += 1
+                save_progress(st.session_state.index, reviewer_name)
                 st.success("✅ Review saved successfully!")
                 st.rerun()
             else:
