@@ -3,8 +3,6 @@ import pandas as pd
 from datetime import datetime
 import pytz
 import os
-import json
-import subprocess
 
 # Page configuration
 st.set_page_config(
@@ -255,14 +253,6 @@ st.markdown("""
         background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     }
     
-    .git-status {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        margin-top: 1rem;
-    }
-    
     @media (max-width: 768px) {
         .main-header {
             padding: 1.5rem;
@@ -279,7 +269,7 @@ st.markdown("""
 st.markdown("""
     <div class="main-header">
         <h1>🧠 QA Review Interface</h1>
-        <p style='font-size: 1.1rem; margin: 0;'>✨ Evaluate model responses with auto-save & Git backup</p>
+        <p style='font-size: 1.1rem; margin: 0;'>✨ Evaluate model responses against gold standard answers with style</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -289,93 +279,6 @@ bd_tz = pytz.timezone('Asia/Dhaka')
 # Define file paths
 OUTPUT_FILE = "qa_dataset_with_remarks.csv"
 INPUT_FILE = "qa_dataset - Sheet1.csv"
-PROGRESS_FILE = "review_progress.json"
-SESSION_FILE = "session_data.json"
-
-# Git functions
-def git_commit_and_push(message):
-    """Commit and push changes to Git"""
-    try:
-        # Add files
-        subprocess.run(['git', 'add', OUTPUT_FILE, PROGRESS_FILE, SESSION_FILE], 
-                      check=False, capture_output=True)
-        
-        # Commit
-        result = subprocess.run(['git', 'commit', '-m', message], 
-                              check=False, capture_output=True, text=True)
-        
-        # Push (optional - comment out if you don't want auto-push)
-        push_result = subprocess.run(['git', 'push'], 
-                                    check=False, capture_output=True, text=True)
-        
-        if "nothing to commit" in result.stdout or result.returncode == 0:
-            return True, "✅ Saved to Git"
-        else:
-            return False, "⚠️ Git commit had issues"
-            
-    except Exception as e:
-        return False, f"⚠️ Git not available: {str(e)}"
-
-def check_git_status():
-    """Check if git is initialized"""
-    try:
-        result = subprocess.run(['git', 'status'], 
-                              check=False, capture_output=True, text=True)
-        return result.returncode == 0
-    except:
-        return False
-
-# Session data functions
-def save_session_data(reviewer_name, index, rating, remark):
-    """Save all session data including current form fields"""
-    try:
-        session_data = {
-            'reviewer_name': reviewer_name,
-            'last_index': index,
-            'current_rating': rating,
-            'current_remark': remark,
-            'last_updated': datetime.now(bd_tz).strftime("%Y-%m-%d %I:%M:%S %p")
-        }
-        with open(SESSION_FILE, 'w') as f:
-            json.dump(session_data, f)
-        return True
-    except Exception as e:
-        st.warning(f"Could not save session: {e}")
-        return False
-
-def load_session_data():
-    """Load saved session data"""
-    if os.path.exists(SESSION_FILE):
-        try:
-            with open(SESSION_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            return None
-    return None
-
-# Progress persistence functions
-def save_progress(index, reviewer_name):
-    """Save current progress to a JSON file"""
-    try:
-        progress_data = {
-            'last_index': index,
-            'reviewer_name': reviewer_name,
-            'last_updated': datetime.now(bd_tz).strftime("%Y-%m-%d %I:%M:%S %p")
-        }
-        with open(PROGRESS_FILE, 'w') as f:
-            json.dump(progress_data, f)
-    except Exception as e:
-        st.warning(f"Could not save progress: {e}")
-
-def load_progress():
-    """Load saved progress from JSON file"""
-    if os.path.exists(PROGRESS_FILE):
-        try:
-            with open(PROGRESS_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            return None
-    return None
 
 # Validate and load data
 @st.cache_data
@@ -406,54 +309,13 @@ def load_existing_reviews():
             return None
     return None
 
-# Initialize session state with saved data
-if "initialized" not in st.session_state:
-    st.session_state.initialized = True
-    
-    # Load session data
-    session_data = load_session_data()
-    
-    if session_data:
-        st.session_state.index = session_data.get('last_index', 0)
-        st.session_state.reviewer_name = session_data.get('reviewer_name', '')
-        st.session_state.show_resume_message = True
-    else:
-        st.session_state.index = 0
-        st.session_state.reviewer_name = ''
-        st.session_state.show_resume_message = False
-    
-    st.session_state.remark_counter = 0
-    st.session_state.rating_counter = 0
-    st.session_state.git_enabled = check_git_status()
-    st.session_state.last_git_message = ""
-
 # Sidebar
 with st.sidebar:
     st.markdown("### 📋 Review Settings")
-    
-    # Reviewer name with persistence
-    reviewer_name = st.text_input(
-        "👤 Reviewer Name:", 
-        value=st.session_state.reviewer_name,
-        placeholder="Enter your name",
-        key="reviewer_name_input"
-    )
-    
-    # Update session state when name changes
-    if reviewer_name != st.session_state.reviewer_name:
-        st.session_state.reviewer_name = reviewer_name
+    reviewer_name = st.text_input("👤 Reviewer Name:", placeholder="Enter your name")
     
     current_time = datetime.now(bd_tz).strftime("%Y-%m-%d %I:%M:%S %p")
     st.info(f"📅 {current_time}")
-    
-    # Git status
-    if st.session_state.git_enabled:
-        st.markdown('<div class="git-status">🔗 Git: Enabled</div>', unsafe_allow_html=True)
-        if st.session_state.last_git_message:
-            st.caption(st.session_state.last_git_message)
-    else:
-        st.markdown('<div class="git-status">⚠️ Git: Not initialized</div>', unsafe_allow_html=True)
-        st.caption("Run `git init` in your project folder")
     
     st.markdown("---")
     
@@ -463,24 +325,13 @@ with st.sidebar:
         "Jump to question:",
         min_value=1,
         max_value=len(df),
-        value=st.session_state.index + 1,
+        value=st.session_state.get('index', 0) + 1,
         step=1
     )
     if st.button("Go", use_container_width=True):
         st.session_state.index = jump_to - 1
         st.session_state.remark_counter += 1
         st.session_state.rating_counter += 1
-        save_progress(st.session_state.index, st.session_state.reviewer_name)
-        st.rerun()
-    
-    st.markdown("---")
-    
-    # Reset progress button
-    if st.button("🔄 Start from Beginning", use_container_width=True):
-        st.session_state.index = 0
-        st.session_state.remark_counter += 1
-        st.session_state.rating_counter += 1
-        save_progress(0, st.session_state.reviewer_name)
         st.rerun()
     
     st.markdown("---")
@@ -491,8 +342,7 @@ with st.sidebar:
     3. ⭐ Rate the model's answer
     4. ✍️ Add your remarks
     5. ⬅️➡️ Navigate using Previous/Next
-    6. 💾 Auto-saves to CSV & Git!
-    7. 🔄 All fields persist on refresh!
+    6. 💾 Everything is auto-saved!
     """)
     
     st.markdown("---")
@@ -505,10 +355,15 @@ with st.sidebar:
     - **Very Poor**: Completely wrong
     """)
 
-# Show resume message if applicable
-if st.session_state.get('show_resume_message', False):
-    st.info(f"✨ Resuming from Question {st.session_state.index + 1} - Welcome back, {st.session_state.reviewer_name or 'Reviewer'}!")
-    st.session_state.show_resume_message = False
+# Initialize session state
+if "index" not in st.session_state:
+    st.session_state.index = 0
+
+if "remark_counter" not in st.session_state:
+    st.session_state.remark_counter = 0
+
+if "rating_counter" not in st.session_state:
+    st.session_state.rating_counter = 0
 
 # Progress bar
 progress = (st.session_state.index + 1) / len(df)
@@ -521,6 +376,7 @@ row = df.iloc[st.session_state.index]
 # Load existing review for current question
 df_saved = load_existing_reviews()
 existing_rating = None
+existing_rating_key = None
 existing_remark = ""
 
 if df_saved is not None and st.session_state.index < len(df_saved):
@@ -537,7 +393,7 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.markdown(f"### 📝 Question {st.session_state.index + 1}")
 with col2:
-    # Count how many questions have been reviewed
+    # Count how many questions have been reviewed (have either rating or remark)
     reviewed_count = 0
     if df_saved is not None:
         for i in range(len(df)):
@@ -651,21 +507,10 @@ def save_review():
                 df_saved.at[st.session_state.index, 'Remarks'] = remark
             
             # Save metadata
-            df_saved.at[st.session_state.index, 'Reviewer'] = st.session_state.reviewer_name if st.session_state.reviewer_name else "Anonymous"
+            df_saved.at[st.session_state.index, 'Reviewer'] = reviewer_name if reviewer_name else "Anonymous"
             df_saved.at[st.session_state.index, 'Review_Date'] = save_time
             
             df_saved.to_csv(OUTPUT_FILE, index=False)
-            
-            # Save session data
-            save_session_data(st.session_state.reviewer_name, st.session_state.index, rating, remark)
-            
-            # Git commit
-            if st.session_state.git_enabled:
-                question_num = st.session_state.index + 1
-                commit_msg = f"Review Q{question_num}: {rating} by {st.session_state.reviewer_name or 'Anonymous'} - {save_time}"
-                success, message = git_commit_and_push(commit_msg)
-                st.session_state.last_git_message = message
-            
             return True
         except Exception as e:
             st.error(f"Error saving: {e}")
@@ -681,10 +526,6 @@ def save_and_navigate(direction):
         st.session_state.index = max(0, st.session_state.index - 1)
     elif direction == "next":
         st.session_state.index = min(len(df) - 1, st.session_state.index + 1)
-    
-    # Save progress and session
-    save_progress(st.session_state.index, st.session_state.reviewer_name)
-    save_session_data(st.session_state.reviewer_name, st.session_state.index, rating, remark)
 
 # Navigation buttons
 st.markdown("---")
@@ -702,10 +543,7 @@ if st.session_state.index == len(df) - 1:
             if save_review():
                 st.session_state.remark_counter += 1
                 st.session_state.rating_counter += 1
-                save_progress(st.session_state.index, st.session_state.reviewer_name)
                 st.success("✅ Review saved successfully!")
-                if st.session_state.git_enabled:
-                    st.info(st.session_state.last_git_message)
                 st.rerun()
             else:
                 st.warning("⚠️ No rating or remark to save")
