@@ -15,10 +15,10 @@ st.set_page_config(
 # Enhanced CSS styling
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     * {
-        font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
+        font-family: 'Inter', sans-serif;
     }
     
     .main {
@@ -91,37 +91,12 @@ st.markdown("""
     
     .question-card p {
         margin: 0;
-        line-height: 1.8;
+        line-height: 1.6;
     }
     
     .question-card strong {
         color: #667eea;
         font-size: 1.1rem;
-    }
-    
-    .bangla-text {
-        font-family: 'Noto Sans Bengali', sans-serif;
-        font-size: 1.1rem;
-        line-height: 2;
-    }
-    
-    .language-badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin-left: 0.5rem;
-    }
-    
-    .badge-english {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-    
-    .badge-bangla {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
     }
     
     .stTextArea textarea {
@@ -293,8 +268,8 @@ st.markdown("""
 # Header Section
 st.markdown("""
     <div class="main-header">
-        <h1>🧠 Bilingual QA Review Interface</h1>
-        <p style='font-size: 1.1rem; margin: 0;'>✨ Evaluate model responses in English & Bangla | ইংরেজি ও বাংলায় মডেল উত্তর মূল্যায়ন করুন</p>
+        <h1>🧠 QA Review Interface</h1>
+        <p style='font-size: 1.1rem; margin: 0;'>✨ Evaluate model responses against gold standard answers with style</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -310,7 +285,7 @@ INPUT_FILE = "qa_dataset - Sheet1.csv"
 def load_data():
     try:
         df = pd.read_csv(INPUT_FILE)
-        required_cols = ['Question', 'Question (Bangla)', 'Answer', 'Answer (Bangla)']
+        required_cols = ['Question', 'Answer', 'Gold Answer']
         missing = [col for col in required_cols if col not in df.columns]
         if missing:
             st.error(f"❌ Missing required columns: {', '.join(missing)}")
@@ -322,8 +297,6 @@ def load_data():
     except Exception as e:
         st.error(f"❌ Error loading data: {e}")
         st.stop()
-
-df = load_data()
 
 df = load_data()
 
@@ -346,13 +319,6 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # Language toggle
-    st.markdown("### 🌐 Language Display")
-    show_english = st.checkbox("Show English", value=True)
-    show_bangla = st.checkbox("Show Bangla (বাংলা)", value=True)
-    
-    st.markdown("---")
-    
     # Jump to question feature
     st.markdown("### 🎯 Quick Navigation")
     jump_to = st.number_input(
@@ -372,7 +338,7 @@ with st.sidebar:
     st.markdown("### 📖 Instructions")
     st.markdown("""
     1. 📖 Read the question carefully
-    2. 🔍 Review the Model's Answer
+    2. 🔍 Compare Model Answer with Gold Answer
     3. ⭐ Rate the model's answer
     4. ✍️ Add your remarks
     5. ⬅️➡️ Navigate using Previous/Next
@@ -448,46 +414,24 @@ with col2:
     
     st.metric("✅ Reviewed", f"{reviewed_count}/{len(df)}")
 
-# Question Card - Bilingual
-question_content = ""
-if show_english:
-    question_content += f'<p><strong>❓ Question <span class="language-badge badge-english">EN</span>:</strong></p>'
-    question_content += f'<p style="margin-top: 0.8rem; font-size: 1.05rem; color: #2d3748;">{row["Question"]}</p>'
-
-if show_bangla:
-    if show_english:
-        question_content += '<hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e0e7ff;">'
-    question_content += f'<p><strong>❓ প্রশ্ন <span class="language-badge badge-bangla">বাং</span>:</strong></p>'
-    question_content += f'<p class="bangla-text" style="margin-top: 0.8rem; color: #2d3748;">{row["Question (Bangla)"]}</p>'
-
+# Question Card
 st.markdown(f"""
     <div class="question-card">
-        {question_content}
+        <p><strong>❓ Question:</strong></p>
+        <p style="margin-top: 0.8rem; font-size: 1.05rem; color: #2d3748;">{row['Question']}</p>
     </div>
 """, unsafe_allow_html=True)
 
-# Answers - Bilingual
-st.markdown("#### 🤖 Model Answer")
-
+# Answers
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("##### 🇬🇧 English")
-    if show_english:
-        st.info(row['Answer'])
-    else:
-        st.caption("_English view disabled_")
+    st.markdown("#### 🤖 Model Answer")
+    st.info(row['Answer'])
 
 with col2:
-    st.markdown("##### 🇧🇩 বাংলা")
-    if show_bangla:
-        st.markdown(f"""
-            <div style="background-color: #d1ecf1; padding: 1rem; border-radius: 8px;">
-                <p class="bangla-text" style="color: #0c5460; margin: 0;">{row['Answer (Bangla)']}</p>
-            </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.caption("_Bangla view disabled_")
+    st.markdown("#### ✅ Gold Answer")
+    st.success(row['Gold Answer'])
 
 # Rating Section
 st.markdown("---")
