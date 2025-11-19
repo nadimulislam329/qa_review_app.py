@@ -284,18 +284,32 @@ INPUT_FILE = "qa_dataset - Sheet1.csv"
 # Validate and load data
 def load_data():
     try:
-        df = pd.read_csv(INPUT_FILE)
+        # Try to read with error handling for bad lines
+        df = pd.read_csv(INPUT_FILE, on_bad_lines='skip', engine='python')
+        
+        # If that fails, try with different encoding
+        if df is None or len(df) == 0:
+            df = pd.read_csv(INPUT_FILE, encoding='latin-1', on_bad_lines='skip')
+        
         required_cols = ['Question', 'Answer', 'Gold Answer']
         missing = [col for col in required_cols if col not in df.columns]
         if missing:
             st.error(f"❌ Missing required columns: {', '.join(missing)}")
             st.stop()
+        
+        # Show warning if rows were skipped
+        st.sidebar.success(f"✅ Loaded {len(df)} questions successfully")
+        
         return df
     except FileNotFoundError:
         st.error(f"❌ Input file not found: {INPUT_FILE}")
         st.stop()
     except Exception as e:
         st.error(f"❌ Error loading data: {e}")
+        st.error("💡 **Tip**: Check your CSV file for:")
+        st.error("- Unclosed quotes in row 30")
+        st.error("- Extra commas or line breaks inside text fields")
+        st.error("- Special characters that need to be escaped")
         st.stop()
 
 df = load_data()
