@@ -413,16 +413,6 @@ if "rating_counter" not in st.session_state:
 # Real function defined below; we will assign it to st.session_state.save_review_fn after definition.
 
 # -------------------------
-# Validation: require reviewer info
-# -------------------------
-if not reviewer_name or reviewer_type == "Select Type":
-    st.markdown("""
-        <div style="background:#fff8f0;border-left:4px solid #ffb020;padding:12px;border-radius:8px;">
-            ⚠️ <strong>Please enter your name and select reviewer type in the sidebar before reviewing.</strong>
-        </div>
-    """, unsafe_allow_html=True)
-
-# -------------------------
 # Progress bar & current row
 # -------------------------
 progress = (st.session_state.index + 1) / len(df)
