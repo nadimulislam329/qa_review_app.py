@@ -125,16 +125,6 @@ st.markdown("""
         font-weight: 600 !important;
     }
     
-    .rating-container {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        padding: 1.5rem;
-        border-radius: 12px;
-        border: 2px solid #e0e7ff;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-    
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #667eea 0%, #764ba2 100%) !important;
     }
@@ -254,6 +244,15 @@ st.markdown("""
         background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     }
     
+    .warning-banner {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+        color: #856404;
+    }
+    
     @media (max-width: 768px) {
         .main-header {
             padding: 1.5rem;
@@ -282,42 +281,24 @@ OUTPUT_FILE = "qa_dataset_with_remarks.csv"
 INPUT_FILE = "qa_dataset - Sheet1.csv"
 
 # Validate and load data
+@st.cache_data
 def load_data():
     try:
-        # Try to read with error handling for bad lines
-        df = pd.read_csv(INPUT_FILE, on_bad_lines='skip', engine='python')
-        
-        # If that fails, try with different encoding
-        if df is None or len(df) == 0:
-            df = pd.read_csv(INPUT_FILE, encoding='latin-1', on_bad_lines='skip')
-        
+        df = pd.read_csv(INPUT_FILE)
         required_cols = ['Question', 'Answer', 'Gold Answer']
         missing = [col for col in required_cols if col not in df.columns]
         if missing:
             st.error(f"❌ Missing required columns: {', '.join(missing)}")
             st.stop()
-        
-        # Show warning if rows were skipped
-        st.sidebar.success(f"✅ Loaded {len(df)} questions successfully")
-        
         return df
     except FileNotFoundError:
         st.error(f"❌ Input file not found: {INPUT_FILE}")
         st.stop()
     except Exception as e:
         st.error(f"❌ Error loading data: {e}")
-        st.error("💡 **Tip**: Check your CSV file for:")
-        st.error("- Unclosed quotes in row 30")
-        st.error("- Extra commas or line breaks inside text fields")
-        st.error("- Special characters that need to be escaped")
         st.stop()
 
 df = load_data()
-
-# Clear cache button in sidebar (for development)
-if st.sidebar.button("🔄 Reload Dataset", help="Click if you've updated the dataset file"):
-    st.cache_data.clear()
-    st.rerun()
 
 # Load existing reviews
 def load_existing_reviews():
@@ -343,11 +324,6 @@ with st.sidebar:
     current_time = datetime.now(bd_tz).strftime("%Y-%m-%d %I:%M:%S %p")
     st.info(f"📅 {current_time}")
     
-    # Reload dataset button
-    if st.button("🔄 Reload Dataset", help="Click if you've updated the dataset file", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-    
     st.markdown("---")
     
     # Jump to question feature
@@ -355,7 +331,7 @@ with st.sidebar:
     jump_to = st.number_input(
         "Jump to question:",
         min_value=1,
-        max_value=st.session_state.total_questions,
+        max_value=len(df),
         value=st.session_state.get('index', 0) + 1,
         step=1
     )
@@ -396,17 +372,18 @@ if "remark_counter" not in st.session_state:
 if "rating_counter" not in st.session_state:
     st.session_state.rating_counter = 0
 
-# Always update total_questions to match current dataset
-st.session_state.total_questions = len(df)
-
-# Ensure index doesn't exceed dataset bounds
-if st.session_state.index >= len(df):
-    st.session_state.index = 0
+# Validation: Check if reviewer info is provided
+if not reviewer_name or reviewer_type == "Select Type":
+    st.markdown("""
+        <div class="warning-banner">
+            ⚠️ <strong>Please enter your name and select reviewer type in the sidebar before reviewing.</strong>
+        </div>
+    """, unsafe_allow_html=True)
 
 # Progress bar
-progress = (st.session_state.index + 1) / st.session_state.total_questions
+progress = (st.session_state.index + 1) / len(df)
 st.progress(progress)
-st.caption(f"📊 Progress: {st.session_state.index + 1} of {st.session_state.total_questions} questions")
+st.caption(f"📊 Progress: {st.session_state.index + 1} of {len(df)} questions")
 
 # Question Display
 row = df.iloc[st.session_state.index]
@@ -414,7 +391,6 @@ row = df.iloc[st.session_state.index]
 # Load existing review for current question
 df_saved = load_existing_reviews()
 existing_rating = None
-existing_rating_key = None
 existing_remark = ""
 
 if df_saved is not None and st.session_state.index < len(df_saved):
@@ -431,26 +407,25 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.markdown(f"### 📝 Question {st.session_state.index + 1}")
 with col2:
-    # Count how many questions have been reviewed (have either rating or remark)
+    # Count how many questions have been reviewed
     reviewed_count = 0
-    if df_saved is not None:
-        for i in range(st.session_state.total_questions):
+    if df_saved is not None and len(df_saved) > 0:
+        for i in range(min(len(df), len(df_saved))):
             has_rating = False
             has_remark = False
             
-            if i < len(df_saved):
-                if 'Rating' in df_saved.columns:
-                    rating_val = df_saved.iloc[i]['Rating']
-                    has_rating = pd.notna(rating_val) and str(rating_val).strip() != ""
-                
-                if 'Remarks' in df_saved.columns:
-                    remark_val = df_saved.iloc[i]['Remarks']
-                    has_remark = pd.notna(remark_val) and str(remark_val).strip() != ""
+            if 'Rating' in df_saved.columns:
+                rating_val = df_saved.iloc[i]['Rating']
+                has_rating = pd.notna(rating_val) and str(rating_val).strip() != ""
+            
+            if 'Remarks' in df_saved.columns:
+                remark_val = df_saved.iloc[i]['Remarks']
+                has_remark = pd.notna(remark_val) and str(remark_val).strip() != ""
             
             if has_rating or has_remark:
                 reviewed_count += 1
     
-    st.metric("✅ Reviewed", f"{reviewed_count}/{st.session_state.total_questions}")
+    st.metric("✅ Reviewed", f"{reviewed_count}/{len(df)}")
 
 # Question Card
 st.markdown(f"""
@@ -513,6 +488,11 @@ remark = st.text_area(
 
 def save_review():
     """Save the current rating and remark to CSV"""
+    # Validate reviewer info
+    if not reviewer_name or reviewer_type == "Select Type":
+        st.error("⚠️ Please enter your name and select reviewer type in the sidebar!")
+        return False
+    
     has_rating = rating is not None
     has_remark = remark.strip() != ""
     
@@ -546,8 +526,8 @@ def save_review():
                 df_saved.at[st.session_state.index, 'Remarks'] = remark
             
             # Save metadata
-            df_saved.at[st.session_state.index, 'Reviewer'] = reviewer_name if reviewer_name else "Anonymous"
-            df_saved.at[st.session_state.index, 'Reviewer_Type'] = reviewer_type if reviewer_type != "Select Type" else ""
+            df_saved.at[st.session_state.index, 'Reviewer'] = reviewer_name
+            df_saved.at[st.session_state.index, 'Reviewer_Type'] = reviewer_type
             df_saved.at[st.session_state.index, 'Review_Date'] = save_time
             
             df_saved.to_csv(OUTPUT_FILE, index=False)
@@ -558,25 +538,27 @@ def save_review():
     return False
 
 def save_and_navigate(direction):
-    save_review()
-    st.session_state.remark_counter += 1
-    st.session_state.rating_counter += 1
-    
-    if direction == "prev":
-        st.session_state.index = max(0, st.session_state.index - 1)
-    elif direction == "next":
-        st.session_state.index = min(st.session_state.total_questions - 1, st.session_state.index + 1)
+    if save_review():
+        st.session_state.remark_counter += 1
+        st.session_state.rating_counter += 1
+        
+        if direction == "prev":
+            st.session_state.index = max(0, st.session_state.index - 1)
+        elif direction == "next":
+            st.session_state.index = min(len(df) - 1, st.session_state.index + 1)
+        return True
+    return False
 
 # Navigation buttons
 st.markdown("---")
 
-if st.session_state.index == st.session_state.total_questions - 1:
+if st.session_state.index == len(df) - 1:
     col1, col2 = st.columns([1, 1])
     
     with col1:
         if st.button("⬅️ Previous", use_container_width=True):
-            save_and_navigate("prev")
-            st.rerun()
+            if save_and_navigate("prev"):
+                st.rerun()
     
     with col2:
         if st.button("💾 Save & Finish", use_container_width=True, type="primary"):
@@ -585,20 +567,18 @@ if st.session_state.index == st.session_state.total_questions - 1:
                 st.session_state.rating_counter += 1
                 st.success("✅ Review saved successfully!")
                 st.rerun()
-            else:
-                st.warning("⚠️ No rating or remark to save")
 else:
     col1, col2 = st.columns([1, 1])
     
     with col1:
         if st.button("⬅️ Previous", use_container_width=True, disabled=(st.session_state.index == 0)):
-            save_and_navigate("prev")
-            st.rerun()
+            if save_and_navigate("prev"):
+                st.rerun()
     
     with col2:
         if st.button("Next ➡️", use_container_width=True):
-            save_and_navigate("next")
-            st.rerun()
+            if save_and_navigate("next"):
+                st.rerun()
 
 # Download section
 st.markdown("---")
@@ -640,3 +620,13 @@ if df_saved is not None:
                         for rating_label, count in rating_dist.items():
                             if pd.notna(rating_label) and rating_label != "":
                                 st.write(f"- {rating_label}: {count}")
+            
+            # Additional statistics
+            if 'Reviewer_Type' in df_saved.columns:
+                st.markdown("---")
+                reviewer_types = df_saved['Reviewer_Type'].value_counts()
+                if len(reviewer_types) > 0:
+                    st.write("**Reviews by Type:**")
+                    for rtype, count in reviewer_types.items():
+                        if pd.notna(rtype) and rtype != "":
+                            st.write(f"- {rtype}: {count}")
