@@ -125,16 +125,6 @@ st.markdown("""
         font-weight: 600 !important;
     }
     
-    .rating-container {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        padding: 1.5rem;
-        border-radius: 12px;
-        border: 2px solid #e0e7ff;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-    
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #667eea 0%, #764ba2 100%) !important;
     }
@@ -254,6 +244,15 @@ st.markdown("""
         background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     }
     
+    .warning-banner {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+        color: #856404;
+    }
+    
     @media (max-width: 768px) {
         .main-header {
             padding: 1.5rem;
@@ -365,13 +364,45 @@ with st.sidebar:
 
 # Initialize session state
 if "index" not in st.session_state:
-    st.session_state.index = 0
+    # Try to load the last reviewed position from saved file
+    df_saved = load_existing_reviews()
+    if df_saved is not None and len(df_saved) > 0:
+        # Find the first unreviewed question
+        last_reviewed = -1
+        for i in range(min(len(df), len(df_saved))):
+            has_review = False
+            if 'Rating' in df_saved.columns:
+                rating_val = df_saved.iloc[i]['Rating']
+                if pd.notna(rating_val) and str(rating_val).strip() != "":
+                    has_review = True
+            if 'Remarks' in df_saved.columns:
+                remark_val = df_saved.iloc[i]['Remarks']
+                if pd.notna(remark_val) and str(remark_val).strip() != "":
+                    has_review = True
+            
+            if has_review:
+                last_reviewed = i
+            else:
+                break
+        
+        # Start from the first unreviewed question, or stay at last if all reviewed
+        st.session_state.index = min(last_reviewed + 1, len(df) - 1)
+    else:
+        st.session_state.index = 0
 
 if "remark_counter" not in st.session_state:
     st.session_state.remark_counter = 0
 
 if "rating_counter" not in st.session_state:
     st.session_state.rating_counter = 0
+
+# Validation: Check if reviewer info is provided
+if not reviewer_name or reviewer_type == "Select Type":
+    st.markdown("""
+        <div class="warning-banner">
+            ⚠️ <strong>Please enter your name and select reviewer type in the sidebar before reviewing.</strong>
+        </div>
+    """, unsafe_allow_html=True)
 
 # Progress bar
 progress = (st.session_state.index + 1) / len(df)
@@ -384,7 +415,6 @@ row = df.iloc[st.session_state.index]
 # Load existing review for current question
 df_saved = load_existing_reviews()
 existing_rating = None
-existing_rating_key = None
 existing_remark = ""
 
 if df_saved is not None and st.session_state.index < len(df_saved):
@@ -401,21 +431,20 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.markdown(f"### 📝 Question {st.session_state.index + 1}")
 with col2:
-    # Count how many questions have been reviewed (have either rating or remark)
+    # Count how many questions have been reviewed
     reviewed_count = 0
-    if df_saved is not None:
-        for i in range(len(df)):
+    if df_saved is not None and len(df_saved) > 0:
+        for i in range(min(len(df), len(df_saved))):
             has_rating = False
             has_remark = False
             
-            if i < len(df_saved):
-                if 'Rating' in df_saved.columns:
-                    rating_val = df_saved.iloc[i]['Rating']
-                    has_rating = pd.notna(rating_val) and str(rating_val).strip() != ""
-                
-                if 'Remarks' in df_saved.columns:
-                    remark_val = df_saved.iloc[i]['Remarks']
-                    has_remark = pd.notna(remark_val) and str(remark_val).strip() != ""
+            if 'Rating' in df_saved.columns:
+                rating_val = df_saved.iloc[i]['Rating']
+                has_rating = pd.notna(rating_val) and str(rating_val).strip() != ""
+            
+            if 'Remarks' in df_saved.columns:
+                remark_val = df_saved.iloc[i]['Remarks']
+                has_remark = pd.notna(remark_val) and str(remark_val).strip() != ""
             
             if has_rating or has_remark:
                 reviewed_count += 1
@@ -483,6 +512,11 @@ remark = st.text_area(
 
 def save_review():
     """Save the current rating and remark to CSV"""
+    # Validate reviewer info
+    if not reviewer_name or reviewer_type == "Select Type":
+        st.error("⚠️ Please enter your name and select reviewer type in the sidebar!")
+        return False
+    
     has_rating = rating is not None
     has_remark = remark.strip() != ""
     
@@ -516,8 +550,8 @@ def save_review():
                 df_saved.at[st.session_state.index, 'Remarks'] = remark
             
             # Save metadata
-            df_saved.at[st.session_state.index, 'Reviewer'] = reviewer_name if reviewer_name else "Anonymous"
-            df_saved.at[st.session_state.index, 'Reviewer_Type'] = reviewer_type if reviewer_type != "Select Type" else ""
+            df_saved.at[st.session_state.index, 'Reviewer'] = reviewer_name
+            df_saved.at[st.session_state.index, 'Reviewer_Type'] = reviewer_type
             df_saved.at[st.session_state.index, 'Review_Date'] = save_time
             
             df_saved.to_csv(OUTPUT_FILE, index=False)
@@ -528,14 +562,16 @@ def save_review():
     return False
 
 def save_and_navigate(direction):
-    save_review()
-    st.session_state.remark_counter += 1
-    st.session_state.rating_counter += 1
-    
-    if direction == "prev":
-        st.session_state.index = max(0, st.session_state.index - 1)
-    elif direction == "next":
-        st.session_state.index = min(len(df) - 1, st.session_state.index + 1)
+    if save_review():
+        st.session_state.remark_counter += 1
+        st.session_state.rating_counter += 1
+        
+        if direction == "prev":
+            st.session_state.index = max(0, st.session_state.index - 1)
+        elif direction == "next":
+            st.session_state.index = min(len(df) - 1, st.session_state.index + 1)
+        return True
+    return False
 
 # Navigation buttons
 st.markdown("---")
@@ -545,8 +581,8 @@ if st.session_state.index == len(df) - 1:
     
     with col1:
         if st.button("⬅️ Previous", use_container_width=True):
-            save_and_navigate("prev")
-            st.rerun()
+            if save_and_navigate("prev"):
+                st.rerun()
     
     with col2:
         if st.button("💾 Save & Finish", use_container_width=True, type="primary"):
@@ -555,20 +591,18 @@ if st.session_state.index == len(df) - 1:
                 st.session_state.rating_counter += 1
                 st.success("✅ Review saved successfully!")
                 st.rerun()
-            else:
-                st.warning("⚠️ No rating or remark to save")
 else:
     col1, col2 = st.columns([1, 1])
     
     with col1:
         if st.button("⬅️ Previous", use_container_width=True, disabled=(st.session_state.index == 0)):
-            save_and_navigate("prev")
-            st.rerun()
+            if save_and_navigate("prev"):
+                st.rerun()
     
     with col2:
         if st.button("Next ➡️", use_container_width=True):
-            save_and_navigate("next")
-            st.rerun()
+            if save_and_navigate("next"):
+                st.rerun()
 
 # Download section
 st.markdown("---")
@@ -610,3 +644,13 @@ if df_saved is not None:
                         for rating_label, count in rating_dist.items():
                             if pd.notna(rating_label) and rating_label != "":
                                 st.write(f"- {rating_label}: {count}")
+            
+            # Additional statistics
+            if 'Reviewer_Type' in df_saved.columns:
+                st.markdown("---")
+                reviewer_types = df_saved['Reviewer_Type'].value_counts()
+                if len(reviewer_types) > 0:
+                    st.write("**Reviews by Type:**")
+                    for rtype, count in reviewer_types.items():
+                        if pd.notna(rtype) and rtype != "":
+                            st.write(f"- {rtype}: {count}")
