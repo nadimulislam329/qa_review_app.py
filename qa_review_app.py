@@ -290,6 +290,8 @@ def load_data():
         if missing:
             st.error(f"❌ Missing required columns: {', '.join(missing)}")
             st.stop()
+        # Remove any duplicate rows
+        df = df.drop_duplicates().reset_index(drop=True)
         return df
     except FileNotFoundError:
         st.error(f"❌ Input file not found: {INPUT_FILE}")
@@ -299,6 +301,13 @@ def load_data():
         st.stop()
 
 df = load_data()
+
+# Filter out any empty questions
+df = df[df['Question'].notna() & (df['Question'].astype(str).str.strip() != '')].reset_index(drop=True)
+
+# Show actual count in sidebar for debugging
+with st.sidebar:
+    st.info(f"📊 Total Questions Loaded: {len(df)}")
 
 # Load existing reviews
 def load_existing_reviews():
@@ -364,7 +373,31 @@ with st.sidebar:
 
 # Initialize session state
 if "index" not in st.session_state:
-    st.session_state.index = 0
+    # Try to load the last reviewed position from saved file
+    df_saved = load_existing_reviews()
+    if df_saved is not None and len(df_saved) > 0:
+        # Find the first unreviewed question
+        last_reviewed = -1
+        for i in range(min(len(df), len(df_saved))):
+            has_review = False
+            if 'Rating' in df_saved.columns:
+                rating_val = df_saved.iloc[i]['Rating']
+                if pd.notna(rating_val) and str(rating_val).strip() != "":
+                    has_review = True
+            if 'Remarks' in df_saved.columns:
+                remark_val = df_saved.iloc[i]['Remarks']
+                if pd.notna(remark_val) and str(remark_val).strip() != "":
+                    has_review = True
+            
+            if has_review:
+                last_reviewed = i
+            else:
+                break
+        
+        # Start from the first unreviewed question, or stay at last if all reviewed
+        st.session_state.index = min(last_reviewed + 1, len(df) - 1)
+    else:
+        st.session_state.index = 0
 
 if "remark_counter" not in st.session_state:
     st.session_state.remark_counter = 0
@@ -381,9 +414,10 @@ if not reviewer_name or reviewer_type == "Select Type":
     """, unsafe_allow_html=True)
 
 # Progress bar
-progress = (st.session_state.index + 1) / len(df)
+total_questions = len(df)
+progress = (st.session_state.index + 1) / total_questions
 st.progress(progress)
-st.caption(f"📊 Progress: {st.session_state.index + 1} of {len(df)} questions")
+st.caption(f"📊 Progress: {st.session_state.index + 1} of {total_questions} questions")
 
 # Question Display
 row = df.iloc[st.session_state.index]
