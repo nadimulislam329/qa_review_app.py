@@ -364,31 +364,7 @@ with st.sidebar:
 
 # Initialize session state
 if "index" not in st.session_state:
-    # Try to load the last reviewed position from saved file
-    df_saved = load_existing_reviews()
-    if df_saved is not None and len(df_saved) > 0:
-        # Find the first unreviewed question
-        last_reviewed = -1
-        for i in range(min(len(df), len(df_saved))):
-            has_review = False
-            if 'Rating' in df_saved.columns:
-                rating_val = df_saved.iloc[i]['Rating']
-                if pd.notna(rating_val) and str(rating_val).strip() != "":
-                    has_review = True
-            if 'Remarks' in df_saved.columns:
-                remark_val = df_saved.iloc[i]['Remarks']
-                if pd.notna(remark_val) and str(remark_val).strip() != "":
-                    has_review = True
-            
-            if has_review:
-                last_reviewed = i
-            else:
-                break
-        
-        # Start from the first unreviewed question, or stay at last if all reviewed
-        st.session_state.index = min(last_reviewed + 1, len(df) - 1)
-    else:
-        st.session_state.index = 0
+    st.session_state.index = 0
 
 if "remark_counter" not in st.session_state:
     st.session_state.remark_counter = 0
