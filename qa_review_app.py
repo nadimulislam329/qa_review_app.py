@@ -332,7 +332,7 @@ with st.sidebar:
     jump_to = st.number_input(
         "Jump to question:",
         min_value=1,
-        max_value=st.session_state.total_questions,
+        max_value=len(df),
         value=st.session_state.get('index', 0) + 1,
         step=1
     )
@@ -373,13 +373,10 @@ if "remark_counter" not in st.session_state:
 if "rating_counter" not in st.session_state:
     st.session_state.rating_counter = 0
 
-if "total_questions" not in st.session_state:
-    st.session_state.total_questions = len(df)
-
 # Progress bar
-progress = (st.session_state.index + 1) / st.session_state.total_questions
+progress = (st.session_state.index + 1) / len(df)
 st.progress(progress)
-st.caption(f"📊 Progress: {st.session_state.index + 1} of {st.session_state.total_questions} questions")
+st.caption(f"📊 Progress: {st.session_state.index + 1} of {len(df)} questions")
 
 # Question Display
 row = df.iloc[st.session_state.index]
@@ -407,7 +404,7 @@ with col2:
     # Count how many questions have been reviewed (have either rating or remark)
     reviewed_count = 0
     if df_saved is not None:
-        for i in range(st.session_state.total_questions):
+        for i in range(len(df)):
             has_rating = False
             has_remark = False
             
@@ -423,7 +420,7 @@ with col2:
             if has_rating or has_remark:
                 reviewed_count += 1
     
-    st.metric("✅ Reviewed", f"{reviewed_count}/{st.session_state.total_questions}")
+    st.metric("✅ Reviewed", f"{reviewed_count}/{len(df)}")
 
 # Question Card
 st.markdown(f"""
@@ -538,12 +535,12 @@ def save_and_navigate(direction):
     if direction == "prev":
         st.session_state.index = max(0, st.session_state.index - 1)
     elif direction == "next":
-        st.session_state.index = min(st.session_state.total_questions - 1, st.session_state.index + 1)
+        st.session_state.index = min(len(df) - 1, st.session_state.index + 1)
 
 # Navigation buttons
 st.markdown("---")
 
-if st.session_state.index == st.session_state.total_questions - 1:
+if st.session_state.index == len(df) - 1:
     col1, col2 = st.columns([1, 1])
     
     with col1:
