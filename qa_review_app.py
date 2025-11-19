@@ -144,7 +144,8 @@ st.markdown("""
     }
     
     [data-testid="stSidebar"] .stTextInput input,
-    [data-testid="stSidebar"] .stNumberInput input {
+    [data-testid="stSidebar"] .stNumberInput input,
+    [data-testid="stSidebar"] .stSelectbox select {
         background: rgba(255, 255, 255, 0.2) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
         color: white !important;
@@ -313,6 +314,13 @@ def load_existing_reviews():
 with st.sidebar:
     st.markdown("### 📋 Review Settings")
     reviewer_name = st.text_input("👤 Reviewer Name:", placeholder="Enter your name")
+    
+    # Reviewer Type Selection
+    reviewer_type = st.selectbox(
+        "👥 Reviewer Type:",
+        options=["Select Type", "Tax Payer", "Non Tax Payer", "Tax Officer"],
+        index=0
+    )
     
     current_time = datetime.now(bd_tz).strftime("%Y-%m-%d %I:%M:%S %p")
     st.info(f"📅 {current_time}")
@@ -488,10 +496,11 @@ def save_review():
                 df_saved['Rating_Value'] = ""
                 df_saved['Remarks'] = ""
                 df_saved['Reviewer'] = ""
+                df_saved['Reviewer_Type'] = ""
                 df_saved['Review_Date'] = ""
             
             # Ensure all columns exist
-            for col in ['Rating', 'Rating_Value', 'Remarks', 'Reviewer', 'Review_Date']:
+            for col in ['Rating', 'Rating_Value', 'Remarks', 'Reviewer', 'Reviewer_Type', 'Review_Date']:
                 if col not in df_saved.columns:
                     df_saved[col] = ""
             
@@ -508,6 +517,7 @@ def save_review():
             
             # Save metadata
             df_saved.at[st.session_state.index, 'Reviewer'] = reviewer_name if reviewer_name else "Anonymous"
+            df_saved.at[st.session_state.index, 'Reviewer_Type'] = reviewer_type if reviewer_type != "Select Type" else ""
             df_saved.at[st.session_state.index, 'Review_Date'] = save_time
             
             df_saved.to_csv(OUTPUT_FILE, index=False)
