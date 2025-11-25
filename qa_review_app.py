@@ -667,10 +667,7 @@ else:
     with col1:
         if st.button("⬅️ Previous", use_container_width=True, disabled=(st.session_state.index == 0), key="prev_btn"):
             navigate_to(st.session_state.index - 1)
-    with col2:
-        if st.button("💾 Save Current", use_container_width=True, key="save_current"):
-            if save_review():
-                st.success("✅ Saved!")
+   
     with col3:
         if st.button("Next ➡️", use_container_width=True, key="next_btn"):
             navigate_to(st.session_state.index + 1)
@@ -740,6 +737,6 @@ with col2:
 st.markdown("---")
 st.markdown("""
     <div style='text-align: center; color: #666; padding: 1rem;'>
-        <p>🧠 QA Review Interface | Made with ❤️ using Streamlit</p>
+        <p>🧠 QA Review Interface | Made with ❤️</p>
     </div>
 """, unsafe_allow_html=True)
