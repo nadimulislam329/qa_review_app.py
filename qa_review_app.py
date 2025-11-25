@@ -642,7 +642,7 @@ remark = st.text_area(
 st.markdown("---")
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    if st.button("💾 Quick Save (Alt+S)", use_container_width=True, type="primary"):
+    if st.button("💾 Quick Save", use_container_width=True, type="primary"):
         if save_review():
             st.success("✅ Review saved!")
 
@@ -667,7 +667,10 @@ else:
     with col1:
         if st.button("⬅️ Previous", use_container_width=True, disabled=(st.session_state.index == 0), key="prev_btn"):
             navigate_to(st.session_state.index - 1)
-   
+    with col2:
+        if st.button("💾 Save Current", use_container_width=True, key="save_current"):
+            if save_review():
+                st.success("✅ Saved!")
     with col3:
         if st.button("Next ➡️", use_container_width=True, key="next_btn"):
             navigate_to(st.session_state.index + 1)
